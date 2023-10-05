@@ -8,10 +8,14 @@ namespace KahootGod;
 
 internal static class Program
 {
-    private const int JoinCode = 9032754;
+    private const int JoinCode = 8027748;
     private static readonly HttpClient Client = new();
 
     private static long _offset;
+
+    private static bool _endCommunication = false;
+
+    private static string _null = Encoding.UTF8.GetString(new byte[] { 0x00 });
 
     private static void Main()
     {
@@ -37,37 +41,118 @@ internal static class Program
         
         
         
-        var webSocketTask = Task.Run(async () => await WebSocketThing(new Uri($"wss://kahoot.it/cometd/{JoinCode}/{token}")));
+        var webSocketTask = Task.Run(async () => await WebSocketHandler(new Uri($"wss://kahoot.it/cometd/{JoinCode}/{token}")));
         
         webSocketTask.Wait();
         
-        var e = webSocketTask.Result;
-            
-        Console.WriteLine(e + "E");
-            
             
     }
 
-    private static async Task<string> WebSocketThing(Uri uri)
+    private static async Task WebSocketHandler(Uri uri)
     {
-        using ClientWebSocket clientWebSocket = new();
-        await clientWebSocket.ConnectAsync(uri, default);
+        using ClientWebSocket socket = new();
+        await socket.ConnectAsync(uri, default);
 
+        #region var packetString = (Start Message)
         var packetString =
-            """[{"id":"1","version":"1.0","minimumVersion":"1.0","channel":"/meta/handshake","supportedConnectionTypes":["websocket","long-polling","callback-polling"],"advice":{"timeout":60000,"interval":0},"ext":{"ack":true,"timesync":{"tc":1694650747824,"l":0,"o":0}}}]""";
-
-        Console.WriteLine(packetString);
+            """
+            [
+                {
+                    "id":"1",
+                    "version":"1.0",
+                    "minimumVersion":"1.0",
+                    "channel":"/meta/handshake",
+                    "supportedConnectionTypes":["websocket","long-polling","callback-polling"],
+                    "advice":{"timeout":60000,"interval":0},
+                    "ext":{
+                        "ack":true,
+                        "timesync":{
+                            "tc":
+            """ + DateTimeOffset.Now.ToUnixTimeMilliseconds() + "," + 
+            """
             
+                            "l":0,"o":0
+                        }
+                    }
+                }
+            ]
+            """;
+        #endregion
+        
         var bytes = Encoding.UTF8.GetBytes(packetString);
-        var result = await clientWebSocket.ReceiveAsync(bytes, default);
+        var segment = new ArraySegment<byte>(bytes);
+        bytes = new byte[1024];
+        
+        await socket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
+        await socket.ReceiveAsync(bytes, default);
+        
+        var resultString = Encoding.UTF8.GetString(bytes).Replace(_null, "")[1..^1];
+        
+        var result = JObject.Parse(resultString);
             
-        var res = Encoding.UTF8.GetString(bytes);
+
+        var clientId = result["clientId"].Value<string>();
+        
+        Console.WriteLine(clientId);
+
+        var keepAlive = WebsocketKeepAlive(socket, clientId);
+
+        _endCommunication = true;
+        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default);
+
+
+        await keepAlive;
+    }
+
+    private static async Task WebsocketKeepAlive(WebSocket socket, string clientId)
+    {
+        var count = 0;
+        
+        while (!_endCommunication)
+        {
+            var packetString =
+                """
+                [
+                    {
+                        "id":
+                """ + count + "," + 
+                """
+                      
+                              "channel":"/meta/connect",
+                              "connectionType":"websocket",
+                              "clientId":
+                """ + clientId + "," +
+                """
+                      
+                              "ext":{
+                                  "ack":8,
+                                  "timesync":{
+                                      "tc":
+                """ + DateTimeOffset.Now.ToUnixTimeMilliseconds() + "," +
+                """
+                      
+                                      "l":35,
+                                      "o":-150
+                                  }
+                              }
+                          }
+                      ]
+                """;
             
-        Console.WriteLine(result.ToString());
+            Console.WriteLine(packetString);
+            
+            var bytes = Encoding.UTF8.GetBytes(packetString);
+            var segment = new ArraySegment<byte>(bytes);
+            await socket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
+            
+            await socket.ReceiveAsync(bytes, default);
 
-        //await clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closed", default);
+            // wait 30s, then send another packet
+            Thread.Sleep(20000);
+            count++;
+        }
 
-        return res + "E";
+        _endCommunication = false;
     }
         
     private static string DeserializeChallenge(JObject reply)
@@ -84,7 +169,9 @@ internal static class Program
         return message;
     }
     
-    /*{
+    /*
+     reply json
+     {
         "twoFactorAuth": false,
         "namerator": false,
         "participantId": false,
@@ -96,12 +183,12 @@ internal static class Program
     }
 
 
-    CHALLENGE
+    CHALLENGE (made readable)
 
-    decode.call(this, 'TXQmCymCwO542x5LxzuYrk8zw4ngWad4XQQeSML0eWoH7wbY5fgN303ChbID304oI4ul2LpuXgtDIVeLGLW4rNYKT4aUWv3TODEw');
+    decode.call(this, '(100 char b64(probably) string)');
 
     function decode(message) {
-        var offset = 68+56+70+65+64?27*43;
+        var offset = (randomized math operation);
         if(this.angular.isString(offset))
             console.log(\"Offset derived as: {\", offset, \"}\");
         return _.replace(message,/./g, function(char, position) {
@@ -125,9 +212,6 @@ internal static class Program
             
         var decoded = Encoding.UTF8.GetString(messageDecoded);
 
-        Console.WriteLine($"Message: {message}");
-        Console.WriteLine($"Decoded: {decoded}");
-        
         //Console.WriteLine($"message: {message[0]}, unicode: {messageUnicode[0]}, decoded unicode: {messageDecoded[0]}, decoded message: {decoded[0]}");
             
         return decoded;
@@ -135,21 +219,6 @@ internal static class Program
     
     private static string GetToken(string encodedToken, string decodedToken) {
         
-        var encodedTokenBytes = new byte[]
-        {
-            0x1F, 0x22, 0x4B, 0x62, 0x00, 0x5A, 0x1A, 0x06, 0x76, 0x51, 0x4A, 0x52, 0x6E, 0x74, 0x78, 0x74, 0x34, 0x6E, 0x3E, 0x1D, 0x5E, 0x7E, 0x42, 0x5C, 0x06, 0x04, 0x53, 0x45, 0x56, 0x7E, 0x43, 0x55, 0x70, 0x0F, 0x56, 0x49, 0x50, 0x0B, 0x1A, 0x01, 0x6A, 0x56, 0x0A, 0x64, 0x03, 0x75, 0x78, 0x53, 0x77, 0x4B, 0x7B, 0x05, 0x43, 0x77, 0x5B, 0x27, 0x06, 0x75, 0x02, 0x0D, 0x0F, 0x70, 0x13, 0x66, 0x4D, 0x01, 0x6C, 0x7D, 0x58, 0x5D, 0x51, 0x5F, 0x59, 0x0E, 0x0F, 0x13, 0x63, 0x4A, 0x56, 0x02, 0x5D, 0x30, 0x09, 0x7E, 0x51, 0x06, 0x6B, 0x7A, 0x24, 0x02, 0x18, 0x05, 0x02, 0x53, 0x7F, 0x04
-        };
-
-        encodedToken = Encoding.UTF8.GetString(encodedTokenBytes);
-
-        decodedToken =
-            "|D{Qfc|`O4rfYEKBQ][{:Kq>?aasgMz0C:7|g=y9Xf=W:BL`C|OdqC9E`E4>;@wR|7[Km>`;m?=pV|47nTlGgdSHEd|6feH=?k=P";
-        
-        Console.WriteLine("===================================");
-        Console.WriteLine(encodedToken);
-        Console.WriteLine(decodedToken);
-        Console.WriteLine("===================================");
-
 
         var encodedTokenUnicode = new Span<byte>(new byte[encodedToken.Length]);
         var decodedTokenUnicode = new Span<byte>(new byte[decodedToken.Length]);
