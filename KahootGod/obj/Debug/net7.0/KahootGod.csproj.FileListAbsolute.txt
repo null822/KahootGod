@@ -1,0 +1,17 @@
+C:\Code\C#\KahootGod\KahootGod\bin\Debug\net7.0\KahootGod.exe
+C:\Code\C#\KahootGod\KahootGod\bin\Debug\net7.0\KahootGod.deps.json
+C:\Code\C#\KahootGod\KahootGod\bin\Debug\net7.0\KahootGod.runtimeconfig.json
+C:\Code\C#\KahootGod\KahootGod\bin\Debug\net7.0\KahootGod.dll
+C:\Code\C#\KahootGod\KahootGod\bin\Debug\net7.0\KahootGod.pdb
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\KahootGod.csproj.AssemblyReference.cache
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\KahootGod.GeneratedMSBuildEditorConfig.editorconfig
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\KahootGod.AssemblyInfoInputs.cache
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\KahootGod.AssemblyInfo.cs
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\KahootGod.csproj.CoreCompileInputs.cache
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\KahootGod.dll
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\refint\KahootGod.dll
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\KahootGod.pdb
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\KahootGod.genruntimeconfig.cache
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\ref\KahootGod.dll
+C:\Code\C#\KahootGod\KahootGod\bin\Debug\net7.0\Newtonsoft.Json.dll
+C:\Code\C#\KahootGod\KahootGod\obj\Debug\net7.0\KahootGod.csproj.CopyComplete
