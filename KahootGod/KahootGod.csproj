@@ -11,4 +11,13 @@
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
 
+    <ItemGroup>
+      <EmbeddedResource Include="PacketScaffolds\KeepAlive.json" />
+      <EmbeddedResource Include="PacketScaffolds\KeepAlive1.json" />
+      <EmbeddedResource Include="PacketScaffolds\KeepAlive2.json" />
+      <EmbeddedResource Include="PacketScaffolds\Login1.json" />
+      <EmbeddedResource Include="PacketScaffolds\Login2.json" />
+      <None Remove="keepAliveStart.json" />
+    </ItemGroup>
+
 </Project>

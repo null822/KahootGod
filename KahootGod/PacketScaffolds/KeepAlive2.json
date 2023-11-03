@@ -1,0 +1,17 @@
+﻿{
+  "id": "2",
+  "channel": "/meta/connect",
+  "connectionType": "websocket",
+  "advice": {
+    "timeout": 0
+  },
+  "clientId": "",
+  "ext": {
+    "ack": 0,
+    "timesync": {
+      "tc": 0,
+      "l": 71,
+      "o": 337
+    }
+  }
+}
